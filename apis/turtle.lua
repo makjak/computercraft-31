@@ -1,13 +1,25 @@
 local self = {}
 local util = dofile("/apis/util")
 local position = dofile("/apis/position")
-local pmemory = dofile("/apis/pmemory")
 
 local SOUTH, WEST, NORTH, EAST = 0, 1, 2, 3
 self.currentSlot = 1
 
 local _moveAllow = true
 local _turtleMoving = false
+
+function self.initialize()
+  position.initialize()
+  return true
+end
+
+function self.equipLeft()
+  return turtle.equipLeft()
+end
+
+function self.equipRight()
+  return turtle.equipRight()
+end
 
 function self.position()
   return position.position()
@@ -25,15 +37,37 @@ function self.getFuelLevel()
   return turtle.getFuelLevel()
 end
 
+function self.getFuelLimit()
+  return turtle.getFuelLimit()
+end
+
+function self.selectFuel()
+  if turtle.refuel(0) then return true end
+
+  local slot = self.currentSlot
+  for i=1,16 do
+    turtle.select(i)
+    if turtle.refuel(0) then
+      return true
+    end
+  end
+  turtle.select(self.currentSlot)
+  return false
+end
+
 function self.switch(direction)
-  if direction == "forward" then
+  if direction == "forward" or direction == "front" then
     return "backward"
-  elseif direction == "backward" then
+  elseif direction == "backward" or direction == "back" then
     return "forward"
   elseif direction == "right" then
     return "left"
   elseif direction == "left" then
     return "right"
+  elseif direction == "up" or direction == "top" then
+    return "down"
+  elseif direction == "down" or direction == "bottom" then
+    return "up"
   end
 end
 
@@ -84,6 +118,29 @@ function self.unturn( dir )
   end
 end
 
+function self.inspect(dir)
+  local s, r = nil, nil
+    
+  self.turn(dir)
+
+  if dir == "up" then s, r = turtle.inspectUp()
+  elseif dir == "down" then s, r = turtle.inspectDown()
+  else s, r = turtle.inspect()
+  end
+
+  self.unturn(dir)
+
+  return s, r
+end
+
+function self.inspectUp()
+  return turtle.inspectUp()
+end
+
+function self.inspectDown()
+  return turtle.inspectDown()
+end
+
 function self.attackUp()
   return turtle.attackUp()
 end
@@ -116,7 +173,7 @@ function self.digDown()
 end
 
 function self.dig(i)
-  if i == "front" then 
+  if i == "front" or i == "forward" then 
     return self.dig()
   elseif i == "top" or i == "up" then 
     return self.digUp()
@@ -414,24 +471,8 @@ function self.transferTo(i,n)
   return turtle.transferTo(i,n)
 end
 
-function self.initialize(x)
-  if pmemory.add("state") then pmemory.write("state",0,"number") end
-  local state = pmemory.read("state","number")
-  if state == 0 or x ~= nil then
-    position.initialize()
-    self.select(1)
-  end
-  return true
-end
-
 function self.setPosition(x,y,z,xDir,yDir)
   position.set(x,y,z,xDir,yDir)
-end
-
-function self.finalize()
-  pmemory.write("state",0,"number")
-  position.initialize()
-  return true
 end
 
 function self.emptySlot()
@@ -489,7 +530,7 @@ end
 
 -- function made by TheNietsnie for a beekeeper program
 -- updated to integrated use with Arctivlargl API
-function self.to(directions)
+function self.to(directions,x)
   if _turtleMoving then
     _moveAllow = false
     sleep(3)
@@ -499,38 +540,39 @@ function self.to(directions)
 
   for i = 1, #directions do
     local coord = util.strsplit(':', directions[i])        
-    local coordValue = tonumber(coord[2])  
-    local currX, currY, currZ, currF = self.position()
+    local coordValue = tonumber(coord[2])
+    local pos = self.position()
+    local currX, currY, currZ = pos.x, pos.y, pos.z
 
     if coord[1] == "x" then
       local distanceToMove = currX - coordValue
       if distanceToMove < 0 then self.turn(EAST)
       elseif distanceToMove > 0 then self.turn(WEST) end
-      for i=1,math.abs(distanceToMove) do self.move("forward") end
+      for i=1,math.abs(distanceToMove) do self.move("forward",x) end
     elseif coord[1] == "y" then
       local distanceToMove = currY - coordValue
       if distanceToMove > 0 then self.turn(NORTH)
       elseif distanceToMove < 0 then self.turn(SOUTH) end
-      for i=1,math.abs(distanceToMove) do self.move("forward") end
+      for i=1,math.abs(distanceToMove) do self.move("forward",x) end
     elseif coord[1] == "z" then                    
       local distanceToMove = currZ - coordValue
       if distanceToMove > 0 then
-        for i=1,math.abs(distanceToMove) do self.move("down") end
+        for i=1,math.abs(distanceToMove) do self.move("down",x) end
       elseif distanceToMove < 0 then
-        for i=1,math.abs(distanceToMove) do self.move("up") end
+        for i=1,math.abs(distanceToMove) do self.move("up",x) end
       end
     elseif coord[1] == "f" then
       self.turn(coordValue)
     end
     
     if coord[1] == "forward" then
-      for i=1,math.abs(coordValue) do self.move("forward") end
+      for i=1,math.abs(coordValue) do self.move("forward",x) end
     elseif coord[1] == "backward" then
-      for i=1,math.abs(coordValue) do self.move("backward") end
+      for i=1,math.abs(coordValue) do self.move("backward",x) end
     elseif coord[1] == "up" then
-      for i=1,math.abs(coordValue) do self.move("up") end
+      for i=1,math.abs(coordValue) do self.move("up",x) end
     elseif coord[1] == "down" then
-      for i=1,math.abs(coordValue) do self.move("down") end
+      for i=1,math.abs(coordValue) do self.move("down",x) end
     end
   end
 

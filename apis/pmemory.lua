@@ -62,9 +62,9 @@ function pmemory.write(pVar, x, dType)
 end
 
 function pmemory.read(pVar, dType)
-  pFile = io.open(pmemory.pPath.."/"..pVar, "r")
+  pFile = fs.open(pmemory.pPath.."/"..pVar, "r")
   if pFile then
-    content = pFile:read()
+    content = pFile:readAll()
     pFile:close()
 
     if dType == "number" or dType == "int" then

@@ -11,14 +11,14 @@ function self.initialize()
 end
 
 function self.position()
-  return position.x, position.y, position.z
+  return {x = position.x, y = position.y, z = position.z}
 end
-local x, y, z = self.position()
+local x, y, z = position.x, position.y, position.z
 
 function self.directions()
-  return position.xDir, position.yDir
+  return {xDir = position.xDir, yDir = position.yDir}
 end
-local xDir, yDir = self.directions()
+local xDir, yDir = position.xDir, position.yDir
 
 function self.facing()
   if yDir ~= 0 then return 1-yDir

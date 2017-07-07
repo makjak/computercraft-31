@@ -32,17 +32,15 @@ state.curr = -1
 function state.initialize()
   pmemory.initialize("state", 0, "#")
   state.curr = pmemory.read("state","#")
-  return true
 end
 
 --**********************************
 -- Set the state to a new value
 --**********************************
-function state.set(x)
+function state.set(new_state)
   pmemory.add("state")
-  pmemory.write("state", x,"#")
-  state.curr = x
-  return true
+  pmemory.write("state", new_state,"#")
+  state.curr = new_state
 end
 
 --**********************************
@@ -60,7 +58,6 @@ end
 function state.finalize()
   pmemory.delete("state")
   state.curr = -1
-  return true
 end
 
 

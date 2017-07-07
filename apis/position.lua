@@ -24,7 +24,6 @@
 local self = {}
 local pmemory = dofile("/apis/pmemory")
 
-
 --**********************************
 -- Module local variables
 --**********************************

@@ -39,8 +39,8 @@ function self.getSelectedSlot()
   return turtle.getSelectedSlot()
 end
 
-function self.select(i)
-  return turtle.select(i) 
+function self.select(slot)
+  return turtle.select(slot) 
 end
 
 function self.getItemDetail(slot)
@@ -95,16 +95,46 @@ function self.suckDown()
   return turtle.suckDown()
 end
 
-function self.compareTo(i)
-  return turtle.compareTo(i)
+function self.compareTo(slot)
+  return turtle.compareTo(slot)
 end
 
-function self.getItemCount(i)
-  return turtle.getItemCount(i)
+function self.getItemCount(slot)
+  return turtle.getItemCount(slot)
 end
 
-function self.getItemSpace(i)
-  return turtle.getItemSpace(i)
+function self.getItemSpace(slot)
+  return turtle.getItemSpace(slot)
+end
+
+function self.refuel(quantity)
+  if quantity then return turtle.refuel(quantity)
+  else return turtle.refuel()
+  end
+end
+
+function self.dropUp(quantity)
+  if quantity then return turtle.dropUp(quantity)
+  else return turtle.dropUp()
+  end
+end
+
+function self.dropDown(quantity)
+  if quantity then return turtle.dropDown(quantity)
+  else return turtle.dropDown()
+  end
+end
+
+function self.placeUp()
+  local current_slot = self.getSelectedSlot()
+  local retv = turtle.placeUp()
+  return retv, self.getItemCount(current_slot)
+end
+
+function self.placeDown()
+  local current_slot = self.getSelectedSlot()
+  local retv = turtle.placeDown()
+  return retv, self.getItemCount(current_slot)
 end
 
 
@@ -112,25 +142,14 @@ end
 -- Turtle Commands Slight Tweaks
 -- Tweaks are made to maintain backwards compatability
 --**********************************
-function self.craft(i)
+function self.craft(quantity)
   self.select(16)
-  return turtle.craft(i)
-end
-
-function self.turnLeft()
-  turtle.turnLeft()
-  position.update("left")
-  return true
-end
-
-function self.turnRight()
-  turtle.turnRight()
-  position.update("right")
-  return true
+  return turtle.craft(quantity)
 end
 
 --**********************************
 -- Return persistant memory position
+-- Directional Primitives
 --**********************************
 function self.position()
   return position.position()
@@ -145,42 +164,21 @@ function self.facing()
 end
 
 --**********************************
--- Selects fuel if able. Otherwise no change
---
--- Returns true if current slot has fuel
--- Otherwise returns true if any slot has fuel
--- Otherwise returns false
---**********************************
-function self.selectFuel()
-  local current_slot = self.getSelectedSlot()
-  if turtle.refuel(0) then return true end
-
-  for i=1,16 do
-    self.select(i)
-    if turtle.refuel(0) then
-      return true
-    end
-  end
-  self.select(current_slot)
-  return false
-end
-
---**********************************
 --  Returns the opposite direction headed
 --    ( useful for turning around )
 --**********************************
-function self.switch(direction)
-  if direction == "forward" or direction == "front" then
+function self.switch(dir)
+  if dir == "forward" or dir == "front" then
     return "backward"
-  elseif direction == "backward" or direction == "back" then
+  elseif dir == "backward" or dir == "back" then
     return "forward"
-  elseif direction == "right" then
+  elseif dir == "right" then
     return "left"
-  elseif direction == "left" then
+  elseif dir == "left" then
     return "right"
-  elseif direction == "up" or direction == "top" then
+  elseif dir == "up" or dir == "top" then
     return "down"
-  elseif direction == "down" or direction == "bottom" then
+  elseif dir == "down" or dir == "bottom" then
     return "up"
   end
 end
@@ -188,6 +186,18 @@ end
 --**********************************
 --  Advanced turn functionality
 --**********************************
+function self.turnLeft()
+  turtle.turnLeft()
+  position.update("left")
+  return true
+end
+
+function self.turnRight()
+  turtle.turnRight()
+  position.update("right")
+  return true
+end
+
 function self.turn( dir )
   if dir == "front" or dir == "top" or dir == "bottom" then
     return true
@@ -222,6 +232,27 @@ function self.unturn( dir )
 end
 
 --**********************************
+-- Selects fuel if able. Otherwise no change
+--
+-- Returns true if current slot has fuel
+-- Otherwise returns true if any slot has fuel
+-- Otherwise returns false
+--**********************************
+function self.selectFuel()
+  local current_slot = self.getSelectedSlot()
+  if turtle.refuel(0) then return true end
+
+  for slot=1,16 do
+    self.select(slot)
+    if turtle.refuel(0) then
+      return true
+    end
+  end
+  self.select(current_slot)
+  return false
+end
+
+--**********************************
 -- Turtle inspect functionality
 --**********************************
 function self.inspect(dir)
@@ -242,15 +273,15 @@ end
 --**********************************
 -- Turtle attack functionality
 --**********************************
-function self.attack(i)
-  if i == "front" then 
+function self.attack(dir)
+  if dir == "front" then 
     return self.attack()
-  elseif i == "top" then 
+  elseif dir == "top" then 
     return self.attackUp()
-  elseif i == "bottom" then 
+  elseif dir == "bottom" then 
     return self.attackDown()
-  elseif i == "left" or i == "right" or i == "back" then 
-    self.turn(i) 
+  elseif dir == "left" or dir == "right" or dir == "back" then 
+    self.turn(dir) 
     return self.attack()
   else 
     return turtle.attack()
@@ -260,15 +291,15 @@ end
 --**********************************
 -- Turtle dig functionality
 --**********************************
-function self.dig(i)
-  if i == "front" or i == "forward" then 
+function self.dig(dir)
+  if dir == "front" or dir == "forward" then 
     return self.dig()
-  elseif i == "top" or i == "up" then 
+  elseif dir == "top" or dir == "up" then 
     return self.digUp()
-  elseif i == "bottom" or i == "down" then 
+  elseif dir == "bottom" or dir == "down" then 
     return self.digDown()
-  elseif i == "left" or i == "right" or i == "back" then 
-    self.turn(i) 
+  elseif dir == "left" or dir == "right" or dir == "back" then 
+    self.turn(dir) 
     return self.dig()
   else 
     return turtle.dig()
@@ -311,11 +342,11 @@ function self.down()
 end
 
 --**********************************
---Provide a value for x to allow digging/attacking
+--Provide a value for optional to allow digging/attacking
 --**********************************
-local function moveForward(x)
+local function moveForward(optional)
   while not self.forward() do
-    if x ~= nil then
+    if optional ~= nil then
       self.attack()
       self.dig()
     end
@@ -324,24 +355,24 @@ local function moveForward(x)
   return true
 end
 
-local function moveBack(x)
-  if x == nil then
+local function moveBack(optional)
+  if optional == nil then
     while not self.back() do
       sleep(0.5)
     end
   else
     if not self.back() then
       self.turn("back")
-      moveForward(x) -- attack/dig forward
+      moveForward(optional) -- attack/dig forward
       self.turn("back")
     end
   end
   return true
 end
 
-local function moveUp(x)
+local function moveUp(optional)
   while not self.up() do
-    if x ~= nil then
+    if optional ~= nil then
       self.attackUp()
       self.digUp()
     end
@@ -350,9 +381,9 @@ local function moveUp(x)
   return true
 end
 
-local function moveDown(x)
+local function moveDown(optional)
   while not self.down() do 
-    if x ~= nil then
+    if optional ~= nil then
       self.attackDown()
       self.digDown()
     end
@@ -364,81 +395,68 @@ end
 --**********************************
 -- Multiple block movement
 --
--- Provide a value for x to allow dig/attack
+-- Provide a value for optional to allow dig/attack
 --**********************************
-function self.move(direction, x)
-  if direction == "forward" then
-    moveForward(x)
-  elseif direction == "right" or direction == "left" then
-    self.turn(direction)
-    moveForward(x)
-    self.unturn(direction)
-  elseif direction == "backward" or direction == "back" then
-    moveBack(x)
-  elseif direction == "up" then
-    moveUp(x)
-  elseif direction == "down" then
-    moveDown(x)
+function self.move(dir, optional)
+  if dir == "forward" then
+    moveForward(optional)
+  elseif dir == "right" or dir == "left" then
+    self.turn(dir)
+    moveForward(optional)
+    self.unturn(dir)
+  elseif dir == "backward" or dir == "back" then
+    moveBack(optional)
+  elseif dir == "up" then
+    moveUp(optional)
+  elseif dir == "down" then
+    moveDown(optional)
   else assert(false)
   end
 end
 
-function self.place(dir, string)
+function self.place(dir, text)
   local current_slot = self.getSelectedSlot()
   if dir == "top" or dir == "up" then 
-    local retv = turtle.placeUp()
-    return retv, self.getItemCount(current_slot)
+    return self.placeUp()
   elseif dir == "bottom" or dir == "down" then 
-    local retv = turtle.placeDown()
-    return retv, self.getItemCount(current_slot)
+    return self.placeDown()
   end
 
   self.turn(dir)
-  local retv = turtle.place(string)
+  local retv = false
+  if text == nil then retv = turtle.place()
+  else retv = turtle.place(text)
+  end
   self.unturn(dir)
 
-  return retv, self.getItemCount(current_slot)
-end
-
-function self.placeUp()
-  local current_slot = self.getSelectedSlot()
-  local retv = turtle.placeUp()
-  return retv, self.getItemCount(current_slot)
-end
-
-function self.placeDown()
-  local current_slot = self.getSelectedSlot()
-  local retv = turtle.placeDown()
   return retv, self.getItemCount(current_slot)
 end
 
 function self.detect(dir)
   local is_obj = false
-
   self.turn(dir)
   
-  if dir == "up" then is_obj = turtle.detectUp()
-  elseif dir == "down" then is_obj = turtle.detectDown()
+  if dir == "up" then is_obj = self.detectUp()
+  elseif dir == "down" then is_obj = self.detectDown()
   else is_obj = turtle.detect()
   end
-
+  
   self.unturn(dir)
-
   return is_obj
 end
 
-function self.compareUp(x)
+function self.compareUp(optional)
   local current_slot = self.getSelectedSlot()
-  if x == nil then
+  if optional == nil then
     return turtle.compareUp()
   end
 
-  for i=1,16 do
-    if self.getItemCount(i) > 0 then
-      self.select(i)
+  for slot=1,16 do
+    if self.getItemCount(slot) > 0 then
+      self.select(slot)
       if turtle.compareUp() then
         self.select(current_slot)
-        return true, i
+        return true, slot
       end
     end
   end
@@ -446,18 +464,18 @@ function self.compareUp(x)
   return false, 0
 end
 
-function self.compareDown(x)
+function self.compareDown(optional)
   local current_slot = self.getSelectedSlot()
-  if x == nil then
+  if optional == nil then
     return turtle.compareDown()
   end
 
-  for i=1,16 do
-    if self.getItemCount(i) > 0 then
-      self.select(i)
+  for slot=1,16 do
+    if self.getItemCount(slot) > 0 then
+      self.select(slot)
       if turtle.compareDown() then
         self.select(current_slot)
-        return true, i
+        return true, slot
       end
     end
   end
@@ -465,18 +483,18 @@ function self.compareDown(x)
   return false, 0
 end
 
-function self.compare(x)
+function self.compare(optional)
   local current_slot = self.getSelectedSlot()
-  if x == nil then
+  if optional == nil then
     return turtle.compare()
   end
 
-  for i=1,16 do
-    if self.getItemCount(i) > 0 then
-      self.select(i)
+  for slot=1,16 do
+    if self.getItemCount(slot) > 0 then
+      self.select(slot)
       if turtle.compare() then
         self.select(current_slot)
-        return true, i
+        return true, slot
       end
     end
   end
@@ -484,62 +502,42 @@ function self.compare(x)
   return false, 0
 end
 
-function self.dropUp(i)
-  if i then return turtle.dropUp(i)
-  else return turtle.dropUp()
-  end
-end
-
-function self.dropDown(i)
-  if i then return turtle.dropDown(i)
-  else return turtle.dropDown()
-  end
-end
-
-function self.drop(i,j)
-  if i == "front" or i == "forward" then 
-    return self.drop(j)
-  elseif i == "top" or i == "up" then 
-    return self.dropUp(j)
-  elseif i == "bottom" or i == "down" then 
-    return self.dropDown(j)
-  elseif i == "left" or i == "right" or i == "back" or i == "backward" then 
-    self.turn(i) 
-    return self.drop(j)
-  elseif i then 
-    return turtle.drop(i)
+function self.drop(dir,quantity)
+  if dir == "front" or dir == "forward" then 
+    return self.drop(quantity)
+  elseif dir == "top" or dir == "up" then 
+    return self.dropUp(quantity)
+  elseif dir == "bottom" or dir == "down" then 
+    return self.dropDown(quantity)
+  elseif dir == "left" or dir == "right" or dir == "back" or dir == "backward" then 
+    self.turn(dir) 
+    return self.drop(quantity)
   else 
     return turtle.drop()
   end
 end
 
-function self.suck(i)
-  if i == "front" or i == "forward" then 
+function self.suck(dir)
+  if dir == "front" or dir == "forward" then 
     return self.suck()
-  elseif i == "top" or i == "up" then 
+  elseif dir == "top" or dir == "up" then 
     return self.suckUp()
-  elseif i == "bottom" or i == "down" then 
+  elseif dir == "bottom" or dir == "down" then 
     return self.suckDown()
-  elseif i == "left" or i == "right" or i == "back" or i == "backward" then 
-    self.turn(i) 
+  elseif dir == "left" or dir == "right" or dir == "back" or dir == "backward" then 
+    self.turn(dir) 
     return self.suck()
   else 
     return turtle.suck()
   end
 end
 
-function self.refuel(i)
-  if i then return turtle.refuel(i)
-  else return turtle.refuel()
-  end
-end
-
-function self.transferTo(i,n)
+function self.transferTo(slot,quantity)
   local current_slot = self.getSelectedSlot()
-  if not n then 
-    n = self.getItemCount( current_slot )
+  if not quantity then 
+    quantity = self.getItemCount( current_slot )
   end
-  return turtle.transferTo(i,n)
+  return turtle.transferTo(slot,quantity)
 end
 
 function self.setPosition(x,y,z,xDir,yDir)
@@ -547,9 +545,9 @@ function self.setPosition(x,y,z,xDir,yDir)
 end
 
 function self.emptySlot()
-  for i = 1,16 do
-    if self.getItemCount(i) == 0 then
-      return i
+  for slot = 1,16 do
+    if self.getItemCount(slot) == 0 then
+      return slot
     end
   end
 end
@@ -558,52 +556,51 @@ function self.selectEmptySlot()
   slot = self.emptySlot()
   if slot then
     self.select(slot)
-    return true
   end
+  return slot ~= nil
 end
 
-function self.swap(i,j)
+function self.swap(slot_a,slot_b)
   local current_slot = self.getSelectedSlot()
   empty = self.emptySlot()
-  if slot == nil then return end
+  if empty == nil then return end
 
-  self.select(i)
+  self.select(slot_a)
   self.transferTo(empty)
-  self.select(j)
-  self.transferTo(i)
+  self.select(slot_b)
+  self.transferTo(slot_a)
   self.select(empty)
-  self.transferTo(j)
-
+  self.transferTo(slot_b)
   self.select(current_slot)
 end
 
-function self.enderFill(enderChest, direction, x)
+function self.enderFill(enderChest, dir, optional)
   local current_slot = self.getSelectedSlot()
-  if direction == "left" or direction == "right" or direction == "back" then
-    self.turn(direction)
-    self.enderFill(enderChest, "forward", x)
-    self.unturn(direction)
+  if dir == "left" or dir == "right" or dir == "back" then
+    self.turn(dir)
+    self.enderFill(enderChest, "forward", optional)
+    self.unturn(dir)
   end
 
   self.select(enderChest)
-  while not self.place(direction) do
-    if x then
-      self.dig(direction)
-      self.attack(direction)
+  while not self.place(dir) do
+    if optional then
+      self.dig(dir)
+      self.attack(dir)
     end
     sleep(0.5)
   end
   self.select(current_slot)
-  while not self.suck(direction) do sleep(0.5) end
+  while not self.suck(dir) do sleep(0.5) end
   self.select(enderChest)
-  self.dig(direction)
+  self.dig(dir)
   self.select(current_slot)
   return true
 end
 
 -- function made by TheNietsnie for a beekeeper program
 -- updated to integrated use with Arctivlargl API
-function self.to(directions,x)
+function self.to(directions,optional)
   for i = 1, #directions do
     local coord = util.strsplit(':', directions[i])        
     local coordValue = tonumber(coord[2])
@@ -614,31 +611,31 @@ function self.to(directions,x)
       local distanceToMove = currX - coordValue
       if distanceToMove < 0 then self.turn(EAST)
       elseif distanceToMove > 0 then self.turn(WEST) end
-      for i=1,math.abs(distanceToMove) do self.move("forward",x) end
+      for i=1,math.abs(distanceToMove) do self.move("forward",optional) end
     elseif coord[1] == "y" then
       local distanceToMove = currY - coordValue
       if distanceToMove > 0 then self.turn(NORTH)
       elseif distanceToMove < 0 then self.turn(SOUTH) end
-      for i=1,math.abs(distanceToMove) do self.move("forward",x) end
+      for i=1,math.abs(distanceToMove) do self.move("forward",optional) end
     elseif coord[1] == "z" then                    
       local distanceToMove = currZ - coordValue
       if distanceToMove > 0 then
-        for i=1,math.abs(distanceToMove) do self.move("down",x) end
+        for i=1,math.abs(distanceToMove) do self.move("down",optional) end
       elseif distanceToMove < 0 then
-        for i=1,math.abs(distanceToMove) do self.move("up",x) end
+        for i=1,math.abs(distanceToMove) do self.move("up",optional) end
       end
     elseif coord[1] == "f" then
       self.turn(coordValue)
     end
     
     if coord[1] == "forward" then
-      for i=1,math.abs(coordValue) do self.move("forward",x) end
+      for i=1,math.abs(coordValue) do self.move("forward",optional) end
     elseif coord[1] == "backward" then
-      for i=1,math.abs(coordValue) do self.move("backward",x) end
+      for i=1,math.abs(coordValue) do self.move("backward",optional) end
     elseif coord[1] == "up" then
-      for i=1,math.abs(coordValue) do self.move("up",x) end
+      for i=1,math.abs(coordValue) do self.move("up",optional) end
     elseif coord[1] == "down" then
-      for i=1,math.abs(coordValue) do self.move("down",x) end
+      for i=1,math.abs(coordValue) do self.move("down",optional) end
     end
   end
 
